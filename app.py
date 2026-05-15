@@ -13,7 +13,7 @@ client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 
 # --- Core Gemini call with fallback and retry ---
-def call_gemini(prompt, retries=2):
+def call_gemini(prompt, retries=1):
     models = ["gemini-2.5-flash", "gemini-2.0-flash"]
     last_error = None
     for model in models:
@@ -40,7 +40,7 @@ def call_gemini(prompt, retries=2):
             except Exception as e:
                 last_error = e
                 if "503" in str(e) or "429" in str(e):
-                    time.sleep(3)
+                    time.sleep(60)
                     continue
                 elif attempt < retries - 1:
                     time.sleep(2)
@@ -346,8 +346,8 @@ def show_sources(sources):
 
 
 # --- App layout ---
-st.set_page_config(page_title="Market Analysis Tool", page_icon="📊", layout="wide")
-st.title("📊 Market Analysis Tool")
+st.set_page_config(page_title="Market Analysis Tool", layout="wide")
+st.title("Market Analysis Tool")
 st.write("Enter startup details to generate an investor-ready market analysis.")
 
 with st.form("analysis_form"):
@@ -405,8 +405,6 @@ if submitted:
 
         # --- Key metrics row ---
         m1, m2, m3, m4 = st.columns(4)
-        novelty_colors = {"existing": "🔴", "partial": "🟡", "novel": "🟢"}
-        novelty_icon = novelty_colors.get(originality.get("novelty", "partial"), "🟡")
         m1.metric("Opportunity Score", f"{opportunity.get('score', 'N/A')} / 10")
         m2.metric("Competitors Found", len(competitors.get("competitors", [])))
         m3.metric("Market CAGR", market_overview.get("cagr", "N/A"))
@@ -465,8 +463,7 @@ if submitted:
 
             st.divider()
             st.subheader("Idea Originality")
-            verdict_colors = {"existing": "🔴", "partial": "🟡", "novel": "🟢"}
-            st.markdown(f"**Verdict:** {verdict_colors.get(originality.get('novelty', 'partial'), '🟡')} {originality.get('verdict', '')}")
+            st.markdown(f"**Verdict:** {verdict_colors.get(originality.get('novelty', 'partial'))} {originality.get('verdict', '')}")
             st.markdown(f"**Why it could survive:** {originality.get('why_it_could_survive', 'N/A')}")
             st.markdown(f"**Why it might not:** {originality.get('why_it_might_not', 'N/A')}")
             show_sources(originality.get("sources", []))
